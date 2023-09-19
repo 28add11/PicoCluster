@@ -4,6 +4,7 @@
 #include "hardware/irq.h"
 #include "hbi.pio.h"
 #include "hbi.h"
+#include <stdint.h>
 
 
 void hbiProtocolHandler(void) { 
@@ -18,15 +19,17 @@ void hbiProtocolHandler(void) {
         pio_sm_put(mainLink.hbiPIO, mainLink.TXsm, pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm));
         break;
     
-    case 2: //MemPut, put a variable in memory
-        uint16_t index;
-        uint16_t size;
-        index = (uint16_t)(mainLink.hbiPIO, mainLink.RXsm);
-        index = ((uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) << 8) | index; //shift for the full 16 bit index
-        
-        size = (uint16_t)(mainLink.hbiPIO, mainLink.RXsm);
-        size = (uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) | size;
-        break;
+    case 2: {//MemPut, put a variable in memory
+    	    uint16_t index;
+    		uint16_t size;
+	
+    		index = (uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm); // Assign the value to index
+    		index = ((uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) << 8) | index; //shift for the full 16 bit index
+	
+    		size = (uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm); // Assign the value to size
+    		size = (uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) | size;
+		}
+    	break;
     
     default:
         break;
@@ -67,20 +70,20 @@ void *sendReq(struct hbi interconnect, uint reqType, void *data) {
 
 	switch (reqType) {
     
-	case 1: //Ping, send byte, return time byte took to go back and forth
+	case 1: { //Ping, send byte, return time byte took to go back and forth
 
-		uint32_t startUs = time_us_32();
+			uint32_t startUs = time_us_32();
 
-		pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, *(uint32_t *)data); // Weird typecast for converting to appropreate type for pio_sm_put
-		uint32_t back = pio_sm_get_blocking(interconnect.hbiPIO, interconnect.TXsm);
+			pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, *(uint32_t *)data); // Weird typecast for converting to appropreate type for pio_sm_put
+			uint32_t back = pio_sm_get_blocking(interconnect.hbiPIO, interconnect.TXsm);
 
-		uint32_t timeTaken = time_us_32() - startUs;
-		retData = &timeTaken;		
+			uint32_t timeTaken = time_us_32() - startUs;
+			retData = &timeTaken;		
 
-		if (back != *(uint32_t *)data) {
-			retData = NULL;
+			if (back != *(uint32_t *)data) {
+				retData = NULL;
+			}
 		}
-
 		break;
     
 	/*

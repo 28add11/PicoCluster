@@ -1,6 +1,7 @@
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hbi/hbi.h"
+#include <stdio.h>
 
 struct hbi mainLink;
 
@@ -11,6 +12,6 @@ int main(void) {
 
 	uint32_t pingData = 69;
 
-	printf("pingTime: %i\n", *sendReq(mainLink, 1, &pingData));
+	printf("pingTime: %i\n", sendReq(mainLink, 1, &pingData));
     return 0;
 }

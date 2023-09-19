@@ -15,3 +15,5 @@ struct hbi {
     \param currentHbi The hbi struct where the information from this will go
 */
 void start_hbi(PIO hbiPIO, uint pinBase, struct hbi *currentHbi);
+
+void *sendReq(struct hbi interconnect, uint reqType, void *data);

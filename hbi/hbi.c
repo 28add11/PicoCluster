@@ -1,12 +1,13 @@
 #include "pico/stdlib.h"
+#include "pico/time.h"
 #include "hardware/pio.h"
 #include "hardware/irq.h"
 #include "hbi.pio.h"
 #include "hbi.h"
 
 
-void hbiProtocolHandler(void)
-{ 
+void hbiProtocolHandler(void) { 
+
     static int state = 0; //State of the handler in case of multi byte commands. Only declared to be 0 on initialization.
     extern struct hbi mainLink;
     uint32_t data = pio_sm_get(mainLink.hbiPIO, mainLink.RXsm);
@@ -24,7 +25,7 @@ void hbiProtocolHandler(void)
         index = ((uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) << 8) | index; //shift for the full 16 bit index
         
         size = (uint16_t)(mainLink.hbiPIO, mainLink.RXsm);
-        size = ((uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) << 8) | size;
+        size = (uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) | size;
         break;
     
     default:
@@ -33,8 +34,8 @@ void hbiProtocolHandler(void)
 }
 
 
-void start_hbi(PIO hbiPIO, uint pinBase, struct hbi *currentHbi) //Start a new high bandwidth interconnect on hbiPIO starting at pinBase
-{ 
+void start_hbi(PIO hbiPIO, uint pinBase, struct hbi *currentHbi) { //Start a new high bandwidth interconnect on hbiPIO starting at pinBase
+
     currentHbi->hbiPIO = hbiPIO;
     uint irqNum;
     const int interruptSource[] = {pis_sm0_rx_fifo_not_empty, pis_sm1_rx_fifo_not_empty, pis_sm2_rx_fifo_not_empty, pis_sm3_rx_fifo_not_empty};
@@ -60,3 +61,43 @@ void start_hbi(PIO hbiPIO, uint pinBase, struct hbi *currentHbi) //Start a new h
     init_hbiRX(currentHbi->hbiPIO, currentHbi->RXsm, pinBase + 5, pinBase + 11, currentHbi->offsetRX);
 }
 
+void *sendReq(struct hbi interconnect, uint reqType, void *data) {
+
+	void *retData = NULL; // Generic type for any returned data
+
+	switch (reqType) {
+    
+	case 1: //Ping, send byte, return time byte took to go back and forth
+
+		uint32_t startUs = time_us_32();
+
+		pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, *(uint32_t *)data); // Weird typecast for converting to appropreate type for pio_sm_put
+		uint32_t back = pio_sm_get_blocking(interconnect.hbiPIO, interconnect.TXsm);
+
+		uint32_t timeTaken = time_us_32() - startUs;
+		retData = &timeTaken;		
+
+		if (back != *(uint32_t *)data) {
+			retData = NULL;
+		}
+
+		break;
+    
+	/*
+    case 2: //MemPut, put a variable in memory
+        uint16_t index;
+        uint16_t size;
+        index = (uint16_t)(mainLink.hbiPIO, mainLink.RXsm);
+        index = ((uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) << 8) | index; //shift for the full 16 bit index
+        
+        size = (uint16_t)(mainLink.hbiPIO, mainLink.RXsm);
+        size = (uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) | size;
+        break;
+	*/
+    
+    default:
+        break;
+    } 
+
+	return retData;
+}

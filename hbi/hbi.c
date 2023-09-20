@@ -11,6 +11,8 @@ void hbiProtocolHandler(void) {
 
     static int state = 0; //State of the handler in case of multi byte commands. Only declared to be 0 on initialization.
     extern struct hbi mainLink;
+	pio_interrupt_clear(mainLink.hbiPIO, mainLink.irqNum);
+
     uint32_t data = pio_sm_get(mainLink.hbiPIO, mainLink.RXsm);
 
     switch (data)
@@ -50,7 +52,9 @@ void start_hbi(PIO hbiPIO, uint pinBase, struct hbi *currentHbi) { //Start a new
     currentHbi->TXsm = pio_claim_unused_sm(hbiPIO, true); //Get state machines
     currentHbi->RXsm = pio_claim_unused_sm(hbiPIO, true);
 
-    pio_set_irq0_source_enabled(currentHbi->hbiPIO, interruptSource[currentHbi->RXsm], true); //Since 
+	currentHbi->irqNum = interruptSource[currentHbi->RXsm];
+
+    pio_set_irq0_source_enabled(currentHbi->hbiPIO, currentHbi->irqNum, true); //Since 
     
     if (currentHbi->hbiPIO == pio0) //IRQ num changes depending on which PIO you are using, thus this code
         irqNum = 7;
@@ -60,8 +64,8 @@ void start_hbi(PIO hbiPIO, uint pinBase, struct hbi *currentHbi) { //Start a new
     irq_set_exclusive_handler(irqNum, hbiProtocolHandler);
     irq_set_enabled(irqNum, true);
 
-    init_hbiTX(currentHbi->hbiPIO, currentHbi->TXsm, pinBase, pinBase + 4, currentHbi->offsetTX); //Start hbi (functions defined in the hbi.pio file)
-    init_hbiRX(currentHbi->hbiPIO, currentHbi->RXsm, pinBase + 5, pinBase + 11, currentHbi->offsetRX);
+    init_hbiTX(currentHbi->hbiPIO, currentHbi->TXsm, pinBase, pinBase + 5, currentHbi->offsetTX); //Start hbi (functions defined in the hbi.pio file)
+    init_hbiRX(currentHbi->hbiPIO, currentHbi->RXsm, pinBase + 6, pinBase + 12, currentHbi->offsetRX);
 }
 
 void *sendReq(struct hbi interconnect, uint reqType, void *data) {

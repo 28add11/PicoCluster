@@ -6,6 +6,7 @@ struct hbi {
     uint offsetRX;
     uint TXsm;
     uint RXsm;
+	uint irqNum;
 };
 
 /*! \brief Initialize a connection using the custom HBI 

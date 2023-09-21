@@ -71,6 +71,7 @@ void start_hbi(PIO hbiPIO, uint pinBase, struct hbi *currentHbi) { //Start a new
 void *sendReq(struct hbi interconnect, uint reqType, void *data) {
 
 	void *retData = NULL; // Generic type for any returned data
+	pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, reqType); // Send the type of req first
 
 	switch (reqType) {
     

@@ -10,8 +10,8 @@ int main(void) {
 
     start_hbi(pio0, 2, &mainLink); //start at pin 2 in case we want to debug with UART
 
-	uint32_t pingData = 69;
+	uint32_t pingData = 1;
 
-	printf("pingTime: %i\n", sendReq(mainLink, 1, &pingData));
+	printf("pingTime: %i\n", *(int *)sendReq(mainLink, 1, &pingData));
     return 0;
 }

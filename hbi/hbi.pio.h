@@ -48,7 +48,7 @@ static inline void init_hbiTX(PIO pio, uint sm, uint pin_base, uint clk_pin, uin
     for (uint i = pin_base; i < pin_base + 5; ++i)
         pio_gpio_init(pio, i);
     pio_gpio_init(pio, clk_pin);
-    sm_config_set_out_shift(&c, true, true, 8);
+    sm_config_set_out_shift(&c, false, true, 8);
     sm_config_set_fifo_join (&c, PIO_FIFO_JOIN_TX);
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);
@@ -94,7 +94,7 @@ static inline void init_hbiRX(PIO pio, uint sm, uint pin_base, uint ack_pin, uin
     for (uint i = pin_base; i < pin_base + 5; ++i)
         pio_gpio_init(pio, i);
     pio_gpio_init(pio, ack_pin);
-    sm_config_set_in_shift(&c, false, true, 8); //configure to shift right (because of paralell bus) and autopush to fifo after every in
+    sm_config_set_in_shift(&c, false, true, 8);
     sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_RX); //Make fifo bigger for DMA
     pio_sm_init(pio, sm, offset, &c); //send 'er running
     pio_sm_set_enabled(pio, sm, true);

@@ -73,7 +73,8 @@ void *sendReq(struct hbi interconnect, uint reqType, void *data) {
 
 	void *retData = NULL; // Generic type for any returned data
 	printf("sending\n");
-	pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, reqType); // Send the type of req first
+	__breakpoint();
+	pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, reqType << 24); // Send the type of req first
 
 	switch (reqType) {
     
@@ -81,7 +82,8 @@ void *sendReq(struct hbi interconnect, uint reqType, void *data) {
 
 			uint32_t startUs = time_us_32();
 
-			pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, *(uint32_t *)data); // Weird typecast for converting to appropreate type for pio_sm_put
+			pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, (*(uint32_t *)data) << 24); // Weird typecast for converting to appropreate type for pio_sm_put
+			// Shift is because we are only transmitting 1 byte and leftshift is enabled, meaning we will pull from the end
 			printf("data put\n");
 			uint32_t back = pio_sm_get_blocking(interconnect.hbiPIO, interconnect.TXsm);
 			printf("data recived\n");

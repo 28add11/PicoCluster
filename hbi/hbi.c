@@ -5,18 +5,19 @@
 #include "hbi.pio.h"
 #include "hbi.h"
 #include <stdint.h>
+#include <stdio.h>
 
 
 void hbiProtocolHandler(void) { 
 
+	__breakpoint();
     static int state = 0; //State of the handler in case of multi byte commands. Only declared to be 0 on initialization.
     extern struct hbi mainLink;
 	pio_interrupt_clear(mainLink.hbiPIO, mainLink.irqNum);
 
     uint32_t data = pio_sm_get(mainLink.hbiPIO, mainLink.RXsm);
 
-    switch (data)
-    {
+    switch (data){
     case 1: //Ping, read next byte and send it back
         pio_sm_put(mainLink.hbiPIO, mainLink.TXsm, pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm));
         break;
@@ -71,6 +72,7 @@ void start_hbi(PIO hbiPIO, uint pinBase, struct hbi *currentHbi) { //Start a new
 void *sendReq(struct hbi interconnect, uint reqType, void *data) {
 
 	void *retData = NULL; // Generic type for any returned data
+	printf("sending\n");
 	pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, reqType); // Send the type of req first
 
 	switch (reqType) {
@@ -80,7 +82,9 @@ void *sendReq(struct hbi interconnect, uint reqType, void *data) {
 			uint32_t startUs = time_us_32();
 
 			pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, *(uint32_t *)data); // Weird typecast for converting to appropreate type for pio_sm_put
+			printf("data put\n");
 			uint32_t back = pio_sm_get_blocking(interconnect.hbiPIO, interconnect.TXsm);
+			printf("data recived\n");
 
 			uint32_t timeTaken = time_us_32() - startUs;
 			retData = &timeTaken;		

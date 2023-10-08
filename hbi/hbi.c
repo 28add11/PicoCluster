@@ -10,10 +10,10 @@
 
 void hbiProtocolHandler(void) { 
 
-	__breakpoint();
+	gpio_put(25, 1);
     static int state = 0; //State of the handler in case of multi byte commands. Only declared to be 0 on initialization.
     extern struct hbi mainLink;
-	pio_interrupt_clear(mainLink.hbiPIO, mainLink.irqNum);
+	irq_clear(mainLink.irqNum);
 
     uint32_t data = pio_sm_get(mainLink.hbiPIO, mainLink.RXsm);
 
@@ -37,6 +37,14 @@ void hbiProtocolHandler(void) {
     default:
         break;
     } 
+
+	uint64_t timeStart = time_us_64(); // Busy wait code
+	while ((time_us_64() - timeStart) < 50000)
+	{
+		tight_loop_contents;
+	}
+	
+	gpio_put(25, 0);
 }
 
 
@@ -47,71 +55,39 @@ void start_hbi(PIO hbiPIO, uint pinBase, struct hbi *currentHbi) { //Start a new
     const int interruptSource[] = {pis_sm0_rx_fifo_not_empty, pis_sm1_rx_fifo_not_empty, pis_sm2_rx_fifo_not_empty, pis_sm3_rx_fifo_not_empty};
     //Array of the interrupt source since we aren't specifying the state machine we are using
 
+    gpio_init(25);
+    gpio_set_dir(25, GPIO_OUT);
+
     currentHbi->offsetTX = pio_add_program(currentHbi->hbiPIO, &hbiTX_program); //Add pio programs to pio execution memory
     currentHbi->offsetRX = pio_add_program(currentHbi->hbiPIO, &hbiRX_program);
 
     currentHbi->TXsm = pio_claim_unused_sm(hbiPIO, true); //Get state machines
     currentHbi->RXsm = pio_claim_unused_sm(hbiPIO, true);
 
-	currentHbi->irqNum = interruptSource[currentHbi->RXsm];
-
-    pio_set_irq0_source_enabled(currentHbi->hbiPIO, currentHbi->irqNum, true); //Since 
+    pio_set_irq0_source_enabled(currentHbi->hbiPIO, currentHbi->irqNum, true); 
     
-    if (currentHbi->hbiPIO == pio0) //IRQ num changes depending on which PIO you are using, thus this code
-        irqNum = 7;
+    if (currentHbi->hbiPIO == pio0) // Since IRQ num changes depending on which PIO you are using, thus this code
+        currentHbi->irqNum = 7;
      else 
-        irqNum = 9;
+        currentHbi->irqNum = 9;
     
-    irq_set_exclusive_handler(irqNum, hbiProtocolHandler);
-    irq_set_enabled(irqNum, true);
+    irq_set_exclusive_handler(currentHbi->irqNum, hbiProtocolHandler);
+    irq_set_enabled(currentHbi->irqNum, true);
 
     init_hbiTX(currentHbi->hbiPIO, currentHbi->TXsm, pinBase, pinBase + 5, currentHbi->offsetTX); //Start hbi (functions defined in the hbi.pio file)
     init_hbiRX(currentHbi->hbiPIO, currentHbi->RXsm, pinBase + 6, pinBase + 12, currentHbi->offsetRX);
 }
 
-void *sendReq(struct hbi interconnect, uint reqType, void *data) {
+uint32_t sendPing(struct hbi *interconnect, uint8_t data) {
+	pio_sm_put(interconnect->hbiPIO, interconnect->TXsm, (uint32_t)0x01000000); // Hex constant for ping datatype
+	// Remember that PIO out grabs from left when OSR shifts left
+	irq_set_enabled(interconnect->irqNum, false); // Disable the IRQ handler to prevent IRQ during ping return
 
-	void *retData = NULL; // Generic type for any returned data
-	printf("sending\n");
-	__breakpoint();
-	pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, reqType << 24); // Send the type of req first
+	uint32_t startTime = time_us_32();
+	pio_sm_put(interconnect->hbiPIO, interconnect->TXsm, ((uint32_t)data) << 24);
+	pio_sm_get_blocking(interconnect->hbiPIO, interconnect->TXsm);
+	uint32_t timeDif = time_us_32() - startTime; // Calculate this here instead of in the return to make sure irq_set_enabled call doesnt affect ping time
 
-	switch (reqType) {
-    
-	case 1: { //Ping, send byte, return time byte took to go back and forth
-
-			uint32_t startUs = time_us_32();
-
-			pio_sm_put(interconnect.hbiPIO, interconnect.RXsm, (*(uint32_t *)data) << 24); // Weird typecast for converting to appropreate type for pio_sm_put
-			// Shift is because we are only transmitting 1 byte and leftshift is enabled, meaning we will pull from the end
-			printf("data put\n");
-			uint32_t back = pio_sm_get_blocking(interconnect.hbiPIO, interconnect.TXsm);
-			printf("data recived\n");
-
-			uint32_t timeTaken = time_us_32() - startUs;
-			retData = &timeTaken;		
-
-			if (back != *(uint32_t *)data) {
-				retData = NULL;
-			}
-		}
-		break;
-    
-	/*
-    case 2: //MemPut, put a variable in memory
-        uint16_t index;
-        uint16_t size;
-        index = (uint16_t)(mainLink.hbiPIO, mainLink.RXsm);
-        index = ((uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) << 8) | index; //shift for the full 16 bit index
-        
-        size = (uint16_t)(mainLink.hbiPIO, mainLink.RXsm);
-        size = (uint16_t)pio_sm_get_blocking(mainLink.hbiPIO, mainLink.RXsm) | size;
-        break;
-	*/
-    
-    default:
-        break;
-    } 
-
-	return retData;
+	irq_set_enabled(interconnect->irqNum, true);
+	return timeDif;
 }

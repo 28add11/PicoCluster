@@ -21,13 +21,13 @@ int main(void) {
 	printf("started\n");
 
 	while (1) {
-		//uint32_t pingData = 1;
-		//gpio_put(LED_PIN, 1);
-		//printf("pingTime: %i\n", *(int *)sendReq(mainLink, 1, &pingData));
-		//
-		//sleep_ms(500);
-		//gpio_put(LED_PIN, 0);
-		tight_loop_contents();
+		uint32_t pingData = 1;
+		gpio_put(LED_PIN, 1);
+		printf("pingTime: %i\n", sendPing(&mainLink, pingData));
+		
+		sleep_ms(500);
+		gpio_put(LED_PIN, 0);
+		//tight_loop_contents();
 	}
     return 0;
 }

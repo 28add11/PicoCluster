@@ -17,4 +17,4 @@ struct hbi {
 */
 void start_hbi(PIO hbiPIO, uint pinBase, struct hbi *currentHbi);
 
-void *sendReq(struct hbi interconnect, uint reqType, void *data);
+uint32_t sendPing(struct hbi *interconnect, uint8_t data);

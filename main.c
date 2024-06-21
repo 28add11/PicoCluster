@@ -47,7 +47,12 @@ int main(void) {
 	}
 
 	} else {
+	uint8_t returnDat;
 
+	while (1) {
+		spi_read_blocking(spi0, 0, &returnDat, 1);
+		spi_write_blocking(spi0, &returnDat, 1);
+	}
 
 	}
 

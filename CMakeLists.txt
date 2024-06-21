@@ -17,7 +17,7 @@ add_executable(picoCluster
         )
 
 # pull in common dependencies
-target_link_libraries(picoCluster PRIVATE pico_stdlib hardware_spi hbiLib)
+target_link_libraries(picoCluster PRIVATE pico_stdlib hardware_spi)
 
 
 

@@ -10,14 +10,14 @@ project(picoCluster)
 pico_sdk_init()
 
 # rest of your project
-add_subdirectory(hbi)
+#add_subdirectory(hbi)
 
 add_executable(picoCluster
         main.c
         )
 
 # pull in common dependencies
-target_link_libraries(picoCluster PRIVATE pico_stdlib hardware_pio hbiLib)
+target_link_libraries(picoCluster PRIVATE pico_stdlib hardware_spi hbiLib)
 
 
 

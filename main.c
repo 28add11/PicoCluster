@@ -39,11 +39,13 @@ int main(void) {
 		spi_write_blocking(spi0, &pingDat, 1);
 		spi_read_blocking(spi0, 0, &returnDat, 1);
 		if (returnDat != pingDat) {
-			printf("Error: ping doesn't match");
+			printf("Error: ping doesn't match\n");
 		}
 
 		uint32_t endTime = time_us_32() - startTime;
-		printf("%i\n", endTime);
+		printf("Ping time: \t%i\nData: \t%i\n", endTime, pingDat);
+		pingDat++;
+		sleep_ms(50);
 	}
 
 	} else {

@@ -4,7 +4,8 @@
 //#include "hbi/hbi.h"
 #include <stdio.h>
 
-#define MASTER 1
+// Note: defined in CMAKE for build sake
+//#define MASTER 1
 
 int main(void) {
     stdio_init_all();
@@ -39,7 +40,7 @@ int main(void) {
 		spi_write_blocking(spi0, &pingDat, 1);
 		spi_read_blocking(spi0, 0, &returnDat, 1);
 		if (returnDat != pingDat) {
-			printf("Error: ping doesn't match\n");
+			printf("Error: ping doesn't match\nGot back %i instead\n", returnDat);
 		}
 
 		uint32_t endTime = time_us_32() - startTime;

@@ -23,20 +23,22 @@ int main(void) {
 
 	printf("started\n");
 
-	spi_init(spi0, 1000000);
+	spi_init(spi0, 100000);
 
 	spi_set_slave(spi0, true);
 	
-	gpio_set_function(2, GPIO_FUNC_SPI);
-	gpio_set_function(3, GPIO_FUNC_SPI);
 	gpio_set_function(4, GPIO_FUNC_SPI);
 	gpio_set_function(5, GPIO_FUNC_SPI);
+	gpio_set_function(6, GPIO_FUNC_SPI);
+	gpio_set_function(7, GPIO_FUNC_SPI);
 
 	uint8_t instruction;
 	uint8_t data;
 
 	while (1) {
 		spi_read_blocking(spi0, 0, &instruction, 1);
+
+		printf("Instruction:\t%i\n", instruction);
 
 		switch (instruction)
 		{
@@ -59,10 +61,12 @@ int main(void) {
 			// Get the size of the buffer to allocate
 			; // Stupid noop to avoid errors
 			size_t size;
-			spi_read_blocking(spi0, 0, &size, sizeof(size_t));
+			spi_read_blocking(spi0, 0, (uint8_t *)(&size), (uint8_t)(sizeof(size_t)));
 
-			uint8_t *adress = malloc(size);
-			spi_write_blocking(spi0, &adress, sizeof(uint8_t *));
+			uint8_t *address = malloc(size);
+			spi_write_blocking(spi0, (uint8_t *)(&address), (uint8_t)(sizeof(uint8_t *)));
+
+			break;
 		
 		default:
 			break;

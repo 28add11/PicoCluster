@@ -25,12 +25,12 @@ int main(void) {
 
 	printf("started\n");
 
-	spi_init(spi0, 1000000);
+	spi_init(spi0, 100000);
 
-	gpio_set_function(2, GPIO_FUNC_SPI);
-	gpio_set_function(3, GPIO_FUNC_SPI);
 	gpio_set_function(4, GPIO_FUNC_SPI);
 	gpio_set_function(5, GPIO_FUNC_SPI);
+	gpio_set_function(6, GPIO_FUNC_SPI);
+	gpio_set_function(7, GPIO_FUNC_SPI);
 
 	
 	// Reset slave pico to synch signals

@@ -26,6 +26,8 @@ int main(void) {
 	spi_init(spi0, 100000);
 
 	spi_set_slave(spi0, true);
+
+	spi_set_format(spi0, 8, 0, 0, SPI_MSB_FIRST);
 	
 	gpio_set_function(4, GPIO_FUNC_SPI);
 	gpio_set_function(5, GPIO_FUNC_SPI);
@@ -48,7 +50,8 @@ int main(void) {
 			gpio_put(LED_PIN, 1);
 			sleep_ms(10); // Give time for any in-progress transfers to stop
 			gpio_put(LED_PIN, 0);
-			spi_init(spi0, 1000000);
+			spi_init(spi0, 100000);
+			spi_set_format(spi0, 8, 0, 0, SPI_MSB_FIRST);
 			spi_set_slave(spi0, true);
 			break;
 			

@@ -27,18 +27,23 @@ int main(void) {
 
 	spi_init(spi0, 100000);
 
+	spi_set_format(spi0, 8, 0, 0, SPI_MSB_FIRST);
+
 	gpio_set_function(4, GPIO_FUNC_SPI);
 	gpio_set_function(5, GPIO_FUNC_SPI);
 	gpio_set_function(6, GPIO_FUNC_SPI);
 	gpio_set_function(7, GPIO_FUNC_SPI);
 
-	
+	uint8_t returnDat; 
+	uint8_t instrDat[2];
+
 	// Reset slave pico to synch signals
-	spi_write_blocking(spi0, 0, 2); // send reset signal
+	instrDat[0] = 0;
+	instrDat[1] = 0;
+	spi_write_blocking(spi0, instrDat, 2); // send reset signal
 	sleep_ms(15); // Give time for reset signal to work
 
-	uint8_t returnDat; 
-	uint8_t pingDat = 0;
+
 
 
 	while(1) {
@@ -46,16 +51,18 @@ int main(void) {
 		// Send a test ping
 		uint32_t startTime = time_us_32();
 
-		spi_write_blocking(spi0, (uint8_t *)(0), 1); // instruction first
-		spi_write_blocking(spi0, &pingDat, 1);
+		instrDat[0] = 1; // Ping instruction
+		instrDat[1] = 0; // Ping data
+
+		spi_write_blocking(spi0, instrDat, 2);
 		spi_read_blocking(spi0, 0, &returnDat, 1);
-		if (returnDat != pingDat) {
+		if (returnDat != instrDat[1]) {
 			printf("Error: ping doesn't match\nGot back %i instead\n", returnDat);
 		}
 
 		uint32_t endTime = time_us_32() - startTime;
 		printf("Ping time: \t%i\n\n", endTime);
-		pingDat++;
+		instrDat[1]++;
 
 		/*
 		// Now we test the malloc

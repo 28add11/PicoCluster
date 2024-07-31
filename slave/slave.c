@@ -38,6 +38,8 @@ int main(void) {
 	uint8_t data;
 
 	while (1) {
+
+
 		spi_read_blocking(spi0, 0, &instruction, 1);
 
 		printf("Instruction:\t%i\n", instruction);
@@ -45,7 +47,7 @@ int main(void) {
 		switch (instruction)
 		{
 
-		case 0: // Alignment reset
+		case 1: // Alignment reset
 			spi_deinit(spi0);
 			gpio_put(LED_PIN, 1);
 			sleep_ms(10); // Give time for any in-progress transfers to stop
@@ -55,18 +57,19 @@ int main(void) {
 			spi_set_slave(spi0, true);
 			break;
 			
-		case 1: // Ping
+		case 2: // Ping
 			spi_read_blocking(spi0, 0, &data, 1);
 			spi_write_blocking(spi0, &data, 1);
 			break;
 
-		case 2: // Malloc
+		case 3: // Malloc
 			// Get the size of the buffer to allocate
 			; // Stupid noop to avoid errors
 			size_t size;
 			spi_read_blocking(spi0, 0, (uint8_t *)(&size), (uint8_t)(sizeof(size_t)));
 
 			uint8_t *address = malloc(size);
+			
 			spi_write_blocking(spi0, (uint8_t *)(&address), (uint8_t)(sizeof(uint8_t *)));
 
 			break;

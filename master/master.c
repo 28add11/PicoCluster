@@ -37,21 +37,25 @@ int main(void) {
 	uint8_t returnDat; 
 	uint8_t instrDat[2];
 
+	uint8_t mallocSize[sizeof(size_t)];
+
+	mallocSize[sizeof(size_t) - 1] = 255;
+
+
 	// Reset slave pico to synch signals
-	instrDat[0] = 0;
+	instrDat[0] = 1;
 	instrDat[1] = 0;
 	spi_write_blocking(spi0, instrDat, 2); // send reset signal
 	sleep_ms(15); // Give time for reset signal to work
 
+	printf("Size of pointer = %i\n", sizeof(uint8_t *));
 
-
-
-	while(1) {
+	//while(1) {
 		
 		// Send a test ping
 		uint32_t startTime = time_us_32();
 
-		instrDat[0] = 1; // Ping instruction
+		instrDat[0] = 2; // Ping instruction
 		instrDat[1] = 0; // Ping data
 
 		spi_write_blocking(spi0, instrDat, 2);
@@ -61,21 +65,23 @@ int main(void) {
 		}
 
 		uint32_t endTime = time_us_32() - startTime;
-		printf("Ping time: \t%i\n\n", endTime);
+		printf("Ping time: \t%i\n", endTime);
 		instrDat[1]++;
 
-		/*
+		
 		// Now we test the malloc
-		spi_write_blocking(spi0, (uint8_t *)(1), 1); // Instruction
-		spi_write_blocking(spi0, (uint8_t *)(255), sizeof(size_t)); // Size to allocate
+		instrDat[0] = 3; // malloc instruction
+
+		spi_write_blocking(spi0, instrDat, 1); // Sending the instruction alone because size_t is funny
+		spi_write_blocking(spi0, mallocSize, sizeof(size_t)); // Size to allocate
 
 		uint8_t *returnedPoint;
-		spi_read_blocking(spi0, 0, &returnedPoint, sizeof(uint8_t *));
-		printf("Pointer result: \t%p\n", returnedPoint);
-		*/
+		spi_read_blocking(spi0, 0, (uint8_t *)(&returnedPoint), sizeof(uint8_t *));
+		printf("Pointer result: \t%p\n\n", returnedPoint);
+		
 
 		sleep_ms(100);
-	}
+	//}
 
     return 0;
 }

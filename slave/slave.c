@@ -34,17 +34,15 @@ int main(void) {
 	gpio_set_function(6, GPIO_FUNC_SPI);
 	gpio_set_function(7, GPIO_FUNC_SPI);
 
-	uint8_t instruction;
-	uint8_t data;
+	uint8_t value[2];
 
 	while (1) {
 
+		spi_read_blocking(spi0, 0xFF, value, 2);
 
-		spi_read_blocking(spi0, 0, &instruction, 1);
+		printf("Instruction:\t%i\n", value[0]);
 
-		printf("Instruction:\t%i\n", instruction);
-
-		switch (instruction)
+		switch (value[0])
 		{
 
 		case 1: // Alignment reset
@@ -58,8 +56,7 @@ int main(void) {
 			break;
 			
 		case 2: // Ping
-			spi_read_blocking(spi0, 0, &data, 1);
-			spi_write_blocking(spi0, &data, 1);
+			spi_write_blocking(spi0, &value[1], 1);
 			break;
 
 		case 3: // Malloc
@@ -69,6 +66,7 @@ int main(void) {
 			spi_read_blocking(spi0, 0, (uint8_t *)(&size), (uint8_t)(sizeof(size_t)));
 
 			uint8_t *address = malloc(size);
+			
 			
 			spi_write_blocking(spi0, (uint8_t *)(&address), (uint8_t)(sizeof(uint8_t *)));
 

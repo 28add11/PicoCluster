@@ -34,7 +34,14 @@ int main(void) {
 	gpio_set_function(6, GPIO_FUNC_SPI);
 	gpio_set_function(7, GPIO_FUNC_SPI);
 
+	gpio_init(21);
+    gpio_set_dir(21, GPIO_OUT);
+	gpio_put(21, 0);
+
 	uint8_t value[2];
+
+	size_t size;
+	uint8_t *address;
 
 	while (1) {
 
@@ -60,14 +67,15 @@ int main(void) {
 			break;
 
 		case 3: // Malloc
-			// Get the size of the buffer to allocate
-			; // Stupid noop to avoid errors
-			size_t size;
-			spi_read_blocking(spi0, 0, (uint8_t *)(&size), (uint8_t)(sizeof(size_t)));
 
-			uint8_t *address = malloc(size);
-			
-			
+			// Get the size of the buffer to allocate
+			spi_read_blocking(spi0, 0xFF, (uint8_t *)(&size), (uint8_t)(sizeof(size_t)));
+
+			printf("Size to allocate: %i\n", size);
+
+			address = malloc(size);
+			printf("Adress: %p\n", address);
+			gpio_put(21, 1);
 			spi_write_blocking(spi0, (uint8_t *)(&address), (uint8_t)(sizeof(uint8_t *)));
 
 			break;

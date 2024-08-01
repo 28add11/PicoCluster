@@ -37,9 +37,7 @@ int main(void) {
 	uint8_t returnDat; 
 	uint8_t instrDat[2];
 
-	uint8_t mallocSize[sizeof(size_t)];
-
-	mallocSize[sizeof(size_t) - 1] = 255;
+	size_t mallocSize = 255;
 
 	// Reset slave pico to synch signals
 	instrDat[0] = 1;
@@ -47,7 +45,10 @@ int main(void) {
 	spi_write_blocking(spi0, instrDat, 2); // send reset signal
 	sleep_ms(15); // Give time for reset signal to work
 
-	while(1) {
+	instrDat[1] = 0; // Ping data
+	uint8_t *returnedPoint;
+
+	//while(1) {
 		
 		// Send a test ping
 		uint32_t startTime = time_us_32();
@@ -56,7 +57,7 @@ int main(void) {
 		instrDat[1] = 0xA5; // Ping data (A5 because I like it for testing the interface)
 
 		spi_write_blocking(spi0, instrDat, 2);
-		sleep_us(100);
+		sleep_us(100); // Processing delay
 		spi_read_blocking(spi0, 0, &returnDat, 1);
 		if (returnDat != instrDat[1]) {
 			printf("Error: ping doesn't match\nGot back %i instead\n", returnDat);
@@ -66,20 +67,22 @@ int main(void) {
 		printf("Ping time: \t%i\n", endTime);
 		instrDat[1]++;
 
-		/*
+
 		// Now we test the malloc
 		instrDat[0] = 3; // malloc instruction
 
-		spi_write_blocking(spi0, instrDat, 1); // Sending the instruction alone because size_t is funny
-		spi_write_blocking(spi0, mallocSize, sizeof(size_t)); // Size to allocate
+		spi_write_blocking(spi0, instrDat, 2); // Sending the instruction (only first byte is used)
+		sleep_us(100);
+		spi_write_blocking(spi0, (uint8_t *)(&mallocSize), sizeof(size_t)); // Size to allocate
 
-		uint8_t *returnedPoint;
+		sleep_ms(3); // Processing delay
+
 		spi_read_blocking(spi0, 0, (uint8_t *)(&returnedPoint), sizeof(uint8_t *));
 		printf("Pointer result: \t%p\n\n", returnedPoint);
-		*/
+		
 
 		sleep_ms(100);
-	}
+	//}
 
     return 0;
 }

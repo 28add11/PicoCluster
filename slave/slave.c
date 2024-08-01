@@ -43,14 +43,15 @@ int main(void) {
 	size_t size;
 	uint8_t *address;
 
+	uint8_t data;
+
 	while (1) {
 
-		spi_read_blocking(spi0, 0xFF, value, 2);
+		spi_read_blocking(spi0, 0, value, 2);
 
 		printf("Instruction:\t%i\n", value[0]);
 
-		switch (value[0])
-		{
+		switch (value[0]) {
 
 		case 1: // Alignment reset
 			spi_deinit(spi0);
@@ -66,18 +67,37 @@ int main(void) {
 			spi_write_blocking(spi0, &value[1], 1);
 			break;
 
-		case 3: // Malloc
+		case 3: // Memory access
 
-			// Get the size of the buffer to allocate
-			spi_read_blocking(spi0, 0xFF, (uint8_t *)(&size), (uint8_t)(sizeof(size_t)));
+			switch (value[1]) { // Get what we are actually doing
+			case 0: // Read
+				// Get adress to read from
+				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&address), sizeof(uint8_t *));
 
-			printf("Size to allocate: %i\n", size);
+				data = *address;
+				spi_write_blocking(spi0, &data, 1);
+				break;
 
-			address = malloc(size);
-			printf("Adress: %p\n", address);
-			gpio_put(21, 1);
-			spi_write_blocking(spi0, (uint8_t *)(&address), (uint8_t)(sizeof(uint8_t *)));
+			case 1: // Write
+				// Get adress to read from
+				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&address), sizeof(uint8_t *));
+				
+				spi_read_blocking(spi0, 0xFF, &data, 1);
 
+				*address = data;
+				break;
+
+			case 2: // Malloc
+				// Get the size of the buffer to allocate
+				spi_read_blocking(spi0, 0, (uint8_t *)(&size), sizeof(size_t));
+
+				address = malloc(size);
+				spi_write_blocking(spi0, (uint8_t *)(&address), sizeof(uint8_t *));
+				break;
+			
+			default:
+				break;
+			}
 			break;
 		
 		default:

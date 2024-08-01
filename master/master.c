@@ -6,6 +6,7 @@
 
 #include "pico/stdlib.h"
 #include "pico/time.h"
+#include "pico/rand.h"
 #include "hardware/spi.h"
 //#include "hbi/hbi.h"
 #include <stdio.h>
@@ -37,16 +38,18 @@ int main(void) {
 	uint8_t returnDat; 
 	uint8_t instrDat[2];
 
-	size_t mallocSize = 255;
+	size_t mallocSize = 256;
+
+	instrDat[1] = 0; // Ping data
+	uint8_t *dataAddr;
+
+	uint32_t offChipDat[64];
 
 	// Reset slave pico to synch signals
 	instrDat[0] = 1;
 	instrDat[1] = 0;
 	spi_write_blocking(spi0, instrDat, 2); // send reset signal
 	sleep_ms(15); // Give time for reset signal to work
-
-	instrDat[1] = 0; // Ping data
-	uint8_t *returnedPoint;
 
 	//while(1) {
 		
@@ -69,19 +72,40 @@ int main(void) {
 
 
 		// Now we test the malloc
-		instrDat[0] = 3; // malloc instruction
+		instrDat[0] = 3; // mem access instruction
+		instrDat[1] = 2; // malloc sub instruction
 
-		spi_write_blocking(spi0, instrDat, 2); // Sending the instruction (only first byte is used)
+		spi_write_blocking(spi0, instrDat, 2); // Sending the instruction
 		sleep_us(100);
+
 		spi_write_blocking(spi0, (uint8_t *)(&mallocSize), sizeof(size_t)); // Size to allocate
-
 		sleep_ms(3); // Processing delay
-
-		spi_read_blocking(spi0, 0, (uint8_t *)(&returnedPoint), sizeof(uint8_t *));
-		printf("Pointer result: \t%p\n\n", returnedPoint);
+		spi_read_blocking(spi0, 0, (uint8_t *)(&dataAddr), sizeof(uint8_t *));
+		if (dataAddr == NULL) {
+			printf("WTF WHY NULL\n\n");
+			return 1;
+		}
 		
 
-		sleep_ms(100);
+		instrDat[1] = 1; // write sub instruction
+
+		// Fill off-pico mem with random data
+		for (int i = 0; i < 64; i++) {
+			offChipDat[i] = get_rand_32();
+			// Send to slave
+			spi_write_blocking(spi0, instrDat, 2); // Sending the instruction
+			sleep_us(100);
+
+			// loop for every adress
+			// TODO: make this system less shit
+			for (int j = 0; j < sizeof(uint32_t); j++) {
+				spi_write_blocking(spi0, (uint8_t *)(&dataAddr[j + i * sizeof(uint32_t)]), sizeof(uint32_t)); // send adress of byte
+				sleep_us(100);
+				spi_write_blocking(spi0, (uint8_t *)(&offChipDat[i] + j), 1); // send byte, lsb first because little endian is cool
+			}			
+		}
+		
+		sleep_ms(10);
 	//}
 
     return 0;

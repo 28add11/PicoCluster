@@ -44,6 +44,7 @@ int main(void) {
 	uint8_t *dataAddr;
 
 	uint32_t offChipDat[64];
+	uint32_t result;
 
 	// Reset slave pico to synch signals
 	instrDat[0] = 1;
@@ -86,23 +87,48 @@ int main(void) {
 			return 1;
 		}
 		
-
-		instrDat[1] = 1; // write sub instruction
+		printf("address = %p\n", dataAddr);
 
 		// Fill off-pico mem with random data
 		for (int i = 0; i < 64; i++) {
+			result = 0;
 			offChipDat[i] = get_rand_32();
-			// Send to slave
-			spi_write_blocking(spi0, instrDat, 2); // Sending the instruction
-			sleep_us(100);
 
-			// loop for every adress
+			instrDat[1] = 1; // write sub instruction
+			// Send to slave
 			// TODO: make this system less shit
-			for (int j = 0; j < sizeof(uint32_t); j++) {
-				spi_write_blocking(spi0, (uint8_t *)(&dataAddr[j + i * sizeof(uint32_t)]), sizeof(uint32_t)); // send adress of byte
+			for (int j = 0; j < sizeof(uint32_t); j++) { // Loop for every address
+				spi_write_blocking(spi0, instrDat, 2); // Sending the instruction
+				sleep_us(100);
+				uint32_t *address = (uint32_t *)dataAddr + i;
+        		uint8_t *byteAddress = (uint8_t*)address + j;
+				spi_write_blocking(spi0, (uint8_t *)(&byteAddress), sizeof(uint32_t)); // send adress of byte
+				printf("%p\n", byteAddress);
 				sleep_us(100);
 				spi_write_blocking(spi0, (uint8_t *)(&offChipDat[i] + j), 1); // send byte, lsb first because little endian is cool
-			}			
+				sleep_ms(3); // Even though this should be pretty fast im not gonna test it
+			}
+
+			instrDat[1] = 0; // read sub instruction
+
+			for (int j = 0; j < sizeof(uint32_t); j++) {
+				spi_write_blocking(spi0, instrDat, 2); // Sending the instruction
+				sleep_us(100);
+				uint32_t *address = (uint32_t *)dataAddr + i;
+        		uint8_t *byteAddress = (uint8_t*)address + j;
+				spi_write_blocking(spi0, (uint8_t *)(&byteAddress), sizeof(uint32_t)); // send adress of byte
+				//spi_write_blocking(spi0, (uint8_t *)(&dataAddr[j + i * sizeof(uint32_t)]), sizeof(uint32_t)); // send adress of byte
+				sleep_ms(2);
+				spi_read_blocking(spi0, 0, &returnDat, 1); // Read the byte
+				printf("%i\n", returnDat);
+				result = result || ((uint32_t)(returnDat) << (j * 8)); // Little endian
+			}
+
+			if (result != offChipDat[i]) {
+				printf("Error: Value %i at index %i does not equal off chip value %i\n\n", offChipDat[i], i, result);
+				break;
+			}
+			sleep_ms(2);
 		}
 		
 		sleep_ms(10);

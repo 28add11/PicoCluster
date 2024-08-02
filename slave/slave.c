@@ -89,7 +89,7 @@ int main(void) {
 
 			case 2: // Malloc
 				// Get the size of the buffer to allocate
-				spi_read_blocking(spi0, 0, (uint8_t *)(&size), sizeof(size_t));
+				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&size), sizeof(size_t));
 
 				address = malloc(size);
 				spi_write_blocking(spi0, (uint8_t *)(&address), sizeof(uint8_t *));

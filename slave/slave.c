@@ -48,9 +48,11 @@ int main(void) {
 
 	while (1) {
 
+		gpio_put(21, 0);
+		
 		spi_read_blocking(spi0, 0xFF, value, 2);
 
-		printf("Instruction:\t%i\n", value[0]);
+		printf("Instruction:\t%i, %i\n", value[0], value[1]);
 
 		switch (value[0]) {
 
@@ -60,6 +62,7 @@ int main(void) {
 			gpio_put(LED_PIN, 1);
 			unreset_block_wait(RESETS_RESET_SPI0_BITS); // Also serves as a delay so LED can actually do stuff
 			gpio_put(LED_PIN, 0);
+			gpio_put(21, 1);
 
 			spi_init(spi0, 100000);
 			spi_set_format(spi0, 8, 0, 0, SPI_MSB_FIRST);
@@ -67,6 +70,7 @@ int main(void) {
 			break;
 			
 		case 2: // Ping
+			gpio_put(21, 1);
 			spi_write_blocking(spi0, &value[1], 1);
 			break;
 
@@ -78,6 +82,7 @@ int main(void) {
 				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&address), sizeof(uint8_t *));
 
 				data = *address;
+				gpio_put(21, 1);
 				spi_write_blocking(spi0, &data, 1);
 				break;
 
@@ -85,6 +90,7 @@ int main(void) {
 				// Get adress to read from
 				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&address), sizeof(uint8_t *));
 				
+				gpio_put(21, 1);
 				spi_read_blocking(spi0, 0xFF, &data, 1);
 
 				*address = data;
@@ -95,6 +101,7 @@ int main(void) {
 				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&size), sizeof(size_t));
 
 				address = malloc(size);
+				gpio_put(21, 1);
 				spi_write_blocking(spi0, (uint8_t *)(&address), sizeof(uint8_t *));
 				break;
 			

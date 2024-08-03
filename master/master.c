@@ -81,13 +81,19 @@ int main(void) {
 			uint32_t *address = (uint32_t *)(dataAddr) + i;
 			writeSub32(con0, offChipDat[i], address);
 
+			sleep_us(500);
+		}
+
+		// Read from off chip mem and confirm
+		for (int i = 0; i < 64; i++) {
+			uint32_t *address = (uint32_t *)(dataAddr) + i;
         	result = readSub32(con0, address);
 
 			if (result != offChipDat[i]) {
 				printf("Error: Value %i at index %i does not equal off chip value %i\n\n", offChipDat[i], i, result);
 				break;
 			}
-			sleep_ms(2);
+			sleep_us(500);
 		}
 
 		if (allocated >= 200000) {

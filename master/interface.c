@@ -32,7 +32,7 @@ uint32_t pingSub(interface connection, uint8_t pingData) {
 	uint32_t startTime = time_us_32();
 
 	spi_write_blocking(connection.spi, instrDat, 2);
-	sleep_us(100); // Processing delay
+	sleep_us(50); // Processing delay
 	spi_read_blocking(connection.spi, 0, &reply, 1);
 
 	uint32_t endTime = time_us_32() - startTime;
@@ -65,7 +65,7 @@ uint8_t *mallocSub(interface connection, size_t size) {
 	spi_write_blocking(connection.spi, instrDat, 2); // Sending the instruction
 	sleep_us(100); // Proc delay
 	spi_write_blocking(connection.spi, (uint8_t *)(&size), sizeof(size_t)); // Size to allocate
-	sleep_ms(3); // malloc takes a rlly long time for some reason
+	sleep_us(100); // malloc takes a rlly long time for some reason
 	spi_read_blocking(connection.spi, 0, (uint8_t *)(&addr), sizeof(uint8_t *));
 
 	return addr;
@@ -80,7 +80,7 @@ void writeSub(interface connection, uint8_t data, uint8_t *address) {
 	spi_write_blocking(connection.spi, instrDat, 2);
 	sleep_us(100);
 	spi_write_blocking(connection.spi, (uint8_t *)(&address), sizeof(uint8_t *)); // send adress of byte
-	sleep_ms(1);
+	// Supa dupa fast so we dont need a wait!
 	spi_write_blocking(connection.spi, &data, 1);
 	return;
 }
@@ -95,7 +95,7 @@ uint8_t readSub(interface connection, uint8_t *address) {
 	spi_write_blocking(connection.spi, instrDat, 2);
 	sleep_us(100);
 	spi_write_blocking(connection.spi, (uint8_t *)(&address), sizeof(uint8_t *)); // send adress of byte
-	sleep_ms(1);
+	// Also supa dupa fast
 	spi_read_blocking(connection.spi, 0, &data, 1); // Read the byte
 
 	return data;
@@ -125,7 +125,7 @@ uint32_t readSub32(interface connection, uint32_t *address) {
 	*/
 	uint8_t *byteAddr;
 	uint8_t byteData;
-	uint32_t data;
+	uint32_t data = 0;
 
 	for (int i = 0; i < sizeof(uint32_t); i++) {
 		byteAddr = (uint8_t *)(address) + i;

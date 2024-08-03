@@ -27,16 +27,14 @@ int main(void) {
 
 	printf("started\n");
 
-	interface con0 = {spi0, {4, 5, 6, 7}, 10000};	
+	interface con0 = {spi0, {4, 5, 6, 7}, 100000};	
 
 	initSPI(con0);
 
 
 	uint8_t instrDat[2];
 
-	uint32_t pingTime; 
-
-	size_t mallocSize = 256;
+	uint32_t pingTime;
 
 	uint8_t *dataAddr;
 
@@ -53,6 +51,8 @@ int main(void) {
 		return 1;
 	}
 
+	sleep_ms(1);
+
 	while(1) {
 		
 		// Send a test ping
@@ -66,15 +66,7 @@ int main(void) {
 
 
 		// Now we test the malloc
-		instrDat[0] = 3; // mem access instruction
-		instrDat[1] = 2; // malloc sub instruction
-
-		spi_write_blocking(spi0, instrDat, 2); // Sending the instruction
-		sleep_us(100);
-
-		spi_write_blocking(spi0, (uint8_t *)(&mallocSize), sizeof(size_t)); // Size to allocate
-		sleep_ms(3); // Processing delay
-		spi_read_blocking(spi0, 0, (uint8_t *)(&dataAddr), sizeof(uint8_t *));
+		dataAddr = mallocSub(con0, 255);
 		if (dataAddr == NULL) {
 			printf("WTF WHY NULL\n\n");
 			return 1;
@@ -83,37 +75,13 @@ int main(void) {
 
 		// Fill off-pico mem with random data
 		for (int i = 0; i < 64; i++) {
-			result = 0;
 			offChipDat[i] = get_rand_32();
 
-			instrDat[1] = 1; // write sub instruction
 			// Send to slave
-			// TODO: make this system less shit
-			for (int j = 0; j < sizeof(uint32_t); j++) { // Loop for every address
-				spi_write_blocking(spi0, instrDat, 2); // Sending the instruction
-				sleep_us(100);
-				uint32_t *address = (uint32_t *)dataAddr + i;
-        		uint8_t *byteAddress = (uint8_t*)address + j;
-				spi_write_blocking(spi0, (uint8_t *)(&byteAddress), sizeof(uint32_t)); // send adress of byte
-				sleep_us(100);
-				uint8_t sendData = (offChipDat[i] >> (j * 8));
-				spi_write_blocking(spi0, &sendData, 1); // send byte, lsb first because little endian is cool
-				sleep_ms(3); // Even though this should be pretty fast im not gonna test it
-			}
+			uint32_t *address = (uint32_t *)(dataAddr) + i;
+			writeSub32(con0, offChipDat[i], address);
 
-			instrDat[1] = 0; // read sub instruction
-
-			for (int j = 0; j < sizeof(uint32_t); j++) {
-				spi_write_blocking(spi0, instrDat, 2); // Sending the instruction
-				sleep_us(100);
-				uint32_t *address = (uint32_t *)dataAddr + i;
-        		uint8_t *byteAddress = (uint8_t*)address + j;
-				spi_write_blocking(spi0, (uint8_t *)(&byteAddress), sizeof(uint32_t)); // send adress of byte
-				//spi_write_blocking(spi0, (uint8_t *)(&dataAddr[j + i * sizeof(uint32_t)]), sizeof(uint32_t)); // send adress of byte
-				sleep_ms(2);
-				spi_read_blocking(spi0, 0, &returnDat, 1); // Read the byte
-				result = result | (((uint32_t)(returnDat)) << (j * 8)); // Little endian
-			}
+        	result = readSub32(con0, address);
 
 			if (result != offChipDat[i]) {
 				printf("Error: Value %i at index %i does not equal off chip value %i\n\n", offChipDat[i], i, result);
@@ -127,7 +95,7 @@ int main(void) {
 			break;
 		}
 		
-		printf("Data good through %i bytes\n", allocated);
+		printf("Done through %i bytes\n", allocated);
 		
 		sleep_ms(10);
 	}

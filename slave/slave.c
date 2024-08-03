@@ -48,7 +48,7 @@ int main(void) {
 
 	while (1) {
 
-		spi_read_blocking(spi0, 0, value, 2);
+		spi_read_blocking(spi0, 0xFF, value, 2);
 
 		printf("Instruction:\t%i\n", value[0]);
 

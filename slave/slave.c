@@ -6,6 +6,7 @@
 
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
+#include "hardware/resets.h"
 //#include "hbi/hbi.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,11 +54,13 @@ int main(void) {
 
 		switch (value[0]) {
 
-		case 1: // Alignment reset
-			spi_deinit(spi0);
+		case 1: // Reset (only reset SPI block because we are stateless beond single instructions)
+			
+			reset_block(RESETS_RESET_SPI0_BITS); // Actually reset the block
 			gpio_put(LED_PIN, 1);
-			sleep_ms(10); // Give time for any in-progress transfers to stop
+			unreset_block_wait(RESETS_RESET_SPI0_BITS); // Also serves as a delay so LED can actually do stuff
 			gpio_put(LED_PIN, 0);
+
 			spi_init(spi0, 100000);
 			spi_set_format(spi0, 8, 0, 0, SPI_MSB_FIRST);
 			spi_set_slave(spi0, true);

@@ -27,19 +27,14 @@ int main(void) {
 
 	printf("started\n");
 
-	spi_init(spi0, 100000);
+	interface con0 = {spi0, {4, 5, 6, 7}, 10000};	
 
-	spi_set_format(spi0, 8, 0, 0, SPI_MSB_FIRST);
-
-	gpio_set_function(4, GPIO_FUNC_SPI);
-	gpio_set_function(5, GPIO_FUNC_SPI);
-	gpio_set_function(6, GPIO_FUNC_SPI);
-	gpio_set_function(7, GPIO_FUNC_SPI);
+	initSPI(con0);
 
 
 	uint8_t instrDat[2];
 
-	uint8_t returnDat; 
+	uint32_t pingTime; 
 
 	size_t mallocSize = 256;
 
@@ -52,28 +47,21 @@ int main(void) {
 	int allocated = 0;
 
 	// Reset slave pico to synch signals
-	instrDat[0] = 1;
-	instrDat[1] = 0;
-	spi_write_blocking(spi0, instrDat, 2); // send reset signal
-	sleep_ms(15); // Give time for reset signal to work
+	int conStatus = resetSub(con0);
+	if (conStatus) {
+		printf("Could not connect to sub, exiting\n\n");
+		return 1;
+	}
 
 	while(1) {
 		
 		// Send a test ping
-		uint32_t startTime = time_us_32();
-
-		instrDat[0] = 2; // Ping instruction
-		instrDat[1] = pingDat; // Ping data (A5 because I like it for testing the interface)
-
-		spi_write_blocking(spi0, instrDat, 2);
-		sleep_us(100); // Processing delay
-		spi_read_blocking(spi0, 0, &returnDat, 1);
-		if (returnDat != pingDat) {
-			printf("Error: ping doesn't match\nGot back %i instead\n", returnDat);
+		pingTime = pingSub(con0, pingDat);
+		if (!pingTime) {
+			printf("Error: ping doesn't match!\n");
 		}
 
-		uint32_t endTime = time_us_32() - startTime;
-		printf("Ping time: \t%i\n", endTime);
+		printf("Ping time: \t%i\n", pingTime);
 		pingDat++;
 
 

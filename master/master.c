@@ -8,9 +8,10 @@
 #include "pico/time.h"
 #include "pico/rand.h"
 #include "hardware/spi.h"
-//#include "hbi/hbi.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "interface.h"
 
 
 int main(void) {

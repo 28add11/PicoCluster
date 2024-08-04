@@ -52,7 +52,7 @@ int main(void) {
 		
 		spi_read_blocking(spi0, 0xFF, value, 2);
 
-		printf("Instruction:\t%i, %i\n", value[0], value[1]);
+		//printf("Instruction:\t%i, %i\n", value[0], value[1]);
 
 		switch (value[0]) {
 
@@ -79,18 +79,20 @@ int main(void) {
 			switch (value[1]) { // Get what we are actually doing
 			case 0: // Read
 				// Get adress to read from
+				gpio_put(21, 1);
 				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&address), sizeof(uint8_t *));
 
 				data = *address;
-				gpio_put(21, 1);
+				
 				spi_write_blocking(spi0, &data, 1);
 				break;
 
 			case 1: // Write
 				// Get adress to read from
+				gpio_put(21, 1);
 				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&address), sizeof(uint8_t *));
 				
-				gpio_put(21, 1);
+				
 				spi_read_blocking(spi0, 0xFF, &data, 1);
 
 				*address = data;
@@ -98,10 +100,11 @@ int main(void) {
 
 			case 2: // Malloc
 				// Get the size of the buffer to allocate
+				gpio_put(21, 1);
 				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&size), sizeof(size_t));
 
 				address = malloc(size);
-				gpio_put(21, 1);
+				
 				spi_write_blocking(spi0, (uint8_t *)(&address), sizeof(uint8_t *));
 				break;
 			

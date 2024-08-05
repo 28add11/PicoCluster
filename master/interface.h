@@ -9,6 +9,7 @@ struct sub_pico_interface {
 };
 
 typedef struct sub_pico_interface interface;
+typedef void (*program)(void);
 
 void initSPI(interface i);
 
@@ -25,3 +26,5 @@ uint8_t readSub(interface connection, uint8_t *address);
 void writeSub32(interface connection, uint32_t data, uint32_t *address);
 
 uint32_t readSub32(interface connection, uint32_t *address);
+
+void executeSub(interface connection, program executeable);

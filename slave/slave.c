@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "slave.h"
+
 int main(void) {
     stdio_init_all();
 
@@ -41,10 +43,7 @@ int main(void) {
 
 	uint8_t value[2];
 
-	size_t size;
-	uint8_t *address;
-
-	uint8_t data;
+	
 
 	while (1) {
 
@@ -78,7 +77,9 @@ int main(void) {
 
 			switch (value[1]) { // Get what we are actually doing
 			case 0: // Read
+				uint8_t data;
 				// Get adress to read from
+				uint8_t *address;
 				gpio_put(21, 1);
 				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&address), sizeof(uint8_t *));
 
@@ -88,7 +89,9 @@ int main(void) {
 				break;
 
 			case 1: // Write
-				// Get adress to read from
+				uint8_t data;
+				// Get adress to write to
+				uint8_t *address;
 				gpio_put(21, 1);
 				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&address), sizeof(uint8_t *));
 				
@@ -99,7 +102,10 @@ int main(void) {
 				break;
 
 			case 2: // Malloc
+
 				// Get the size of the buffer to allocate
+				size_t size;
+				uint8_t *address;
 				gpio_put(21, 1);
 				spi_read_blocking(spi0, 0xFF, (uint8_t *)(&size), sizeof(size_t));
 
@@ -113,6 +119,16 @@ int main(void) {
 			}
 			break;
 		
+		case 4: // Program context switch
+			// Get address of where to start running (program type defined in slave.h)
+			program address;
+			spi_read_blocking(spi0, 0xFF, (uint8_t *)(&address), sizeof(program));
+
+			// Transfer execution
+			address = (program)((uint32_t)address | 1); // | 1 relates to ARM's thumb execution, which is required for execution to work
+			address();
+			break;
+
 		default:
 			break;
 		}

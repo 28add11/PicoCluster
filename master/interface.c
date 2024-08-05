@@ -32,7 +32,7 @@ uint32_t pingSub(interface connection, uint8_t pingData) {
 	uint32_t startTime = time_us_32();
 
 	spi_write_blocking(connection.spi, instrDat, 2);
-	sleep_us(75); // Processing delay
+
 	spi_read_blocking(connection.spi, 0, &reply, 1);
 
 	uint32_t endTime = time_us_32() - startTime;
@@ -113,7 +113,7 @@ void writeSub32(interface connection, uint32_t data, uint32_t *address) {
 		byteAddr = (uint8_t *)(address) + i;
 		byteData = data >> (i * 8);
 		writeSub(connection, byteData, byteAddr);
-		sleep_us(100);
+		sleep_us(10);
 	}
 
 	return;
@@ -131,8 +131,20 @@ uint32_t readSub32(interface connection, uint32_t *address) {
 		byteAddr = (uint8_t *)(address) + i;
 		byteData = readSub(connection, byteAddr);
 		data = data | ((uint32_t)(byteData) << (i * 8));
-		sleep_us(100);
+		sleep_us(10);
 	}
 
 	return data;
+}
+
+
+void executeSub(interface connection, program executeable) {
+
+	uint8_t instrDat[2] = {4, 0}; // 4 is execution sub instruction
+	spi_write_blocking(connection.spi, instrDat, 2); // Sending the instruction
+	sleep_us(10);
+
+	spi_write_blocking(connection.spi, (uint8_t *)(&executeable), sizeof(program)); // Send address to execute from
+
+	return;
 }

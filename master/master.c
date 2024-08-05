@@ -14,6 +14,22 @@
 #include "interface.h"
 
 
+void blinkLED(void){
+	const uint LED_PIN = PICO_DEFAULT_LED_PIN;
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+
+	while (1) {
+		gpio_put(LED_PIN, 1);
+    	sleep_ms(250);
+    	gpio_put(LED_PIN, 0);
+		sleep_ms(250);
+	}
+
+	return;
+}
+
+
 int main(void) {
     stdio_init_all();
 
@@ -53,6 +69,7 @@ int main(void) {
 
 	sleep_ms(1);
 
+	/*
 	while(1) {
 		
 		// Send a test ping
@@ -81,7 +98,7 @@ int main(void) {
 			uint32_t *address = (uint32_t *)(dataAddr) + i;
 			writeSub32(con0, offChipDat[i], address);
 
-			sleep_us(500);
+			sleep_us(100);
 		}
 
 		// Read from off chip mem and confirm
@@ -93,7 +110,7 @@ int main(void) {
 				printf("Error: Value %i at index %i does not equal off chip value %i\n\n", offChipDat[i], i, result);
 				break;
 			}
-			sleep_us(500);
+			sleep_us(100);
 		}
 
 		if (allocated >= 200000) {
@@ -105,6 +122,11 @@ int main(void) {
 		
 		sleep_ms(10);
 	}
+	*/
+
+
+
+
 
     return 0;
 }

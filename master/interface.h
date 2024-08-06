@@ -27,4 +27,4 @@ void writeSub32(interface connection, uint32_t data, uint32_t *address);
 
 uint32_t readSub32(interface connection, uint32_t *address);
 
-void executeSub(interface connection, program executeable);
+void executeSub(interface connection, uint8_t *executeable);

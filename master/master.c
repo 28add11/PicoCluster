@@ -14,7 +14,7 @@
 #include "interface.h"
 
 
-void blinkLED(void){
+void __no_inline_not_in_flash_func(blinkLED)(void){
 	const uint LED_PIN = PICO_DEFAULT_LED_PIN;
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
@@ -48,8 +48,6 @@ int main(void) {
 	initSPI(con0);
 
 
-	uint8_t instrDat[2];
-
 	uint32_t pingTime;
 
 	uint8_t *dataAddr;
@@ -68,6 +66,25 @@ int main(void) {
 	}
 
 	sleep_ms(1);
+
+	// Attempt to execute program on sub
+
+	uint8_t byteData;
+	uint8_t *byteAddr;
+	program blinker = blinkLED;
+
+	dataAddr = mallocSub(con0, sizeof(blinkLED) + 4); // +4 to satisfy arm's boundary requirement
+	dataAddr = (uint8_t *)(((int)dataAddr + 3) & !3); // Arm boundary requirements
+
+	for (int i = 0; i < sizeof(blinkLED); i++) {
+		byteAddr = (uint8_t *)(dataAddr) + i;
+		byteData = ((uint8_t *)(blinker))[i];
+		writeSub(con0, byteData, byteAddr);
+		sleep_us(10);
+	}
+
+	executeSub(con0, dataAddr);
+
 
 	/*
 	while(1) {

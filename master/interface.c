@@ -138,7 +138,7 @@ uint32_t readSub32(interface connection, uint32_t *address) {
 }
 
 
-void executeSub(interface connection, program executeable) {
+void executeSub(interface connection, uint8_t *executeable) {
 
 	uint8_t instrDat[2] = {4, 0}; // 4 is execution sub instruction
 	spi_write_blocking(connection.spi, instrDat, 2); // Sending the instruction

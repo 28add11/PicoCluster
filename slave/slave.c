@@ -7,6 +7,7 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "hardware/resets.h"
+#include "hardware/watchdog.h"
 //#include "hbi/hbi.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -117,14 +118,15 @@ int main(void) {
 		case 4: // Program context switch
 			;
 			// Get address of where to start running (program type defined in slave.h)
-			program executable;
-			spi_read_blocking(spi0, 0xFF, (uint8_t *)(&executable), sizeof(program));
+			int executable;
+			spi_read_blocking(spi0, 0xFF, (uint8_t *)(&executable), sizeof(int *));
 
 			printf("Balling: starting execution\n\n");
 
 			// Transfer execution
-			executable = (program)((uint32_t)executable | 1); // | 1 relates to ARM's thumb execution, which is required for execution to work
-			executable();
+			executable = executable | 1; // | 1 relates to ARM's thumb execution, which is required for execution to work
+			watchdog_reboot(executable, 0, 0x7FFFFF);
+			//executable();
 			break;
 
 		default:

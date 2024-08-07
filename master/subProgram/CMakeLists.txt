@@ -24,6 +24,8 @@ add_custom_command(
     COMMENT "Generating binary header from blinkLED"
 )
 
+add_link_options(-Ttext20004000)
+
 # Add custom targets to drive the custom commands
 add_custom_target(generate_raw_binary ALL DEPENDS blinkLED.bin)
 add_custom_target(embed_blinkLED_bin ALL DEPENDS ${CMAKE_BINARY_DIR}/generated/blinkLED_bin.h)

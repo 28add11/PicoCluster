@@ -58,6 +58,10 @@ int main(void) {
 	uint8_t byteData;
 	uint8_t *byteAddr;
 
+	// Get our distance from where the program needs to be
+	uint8_t *deltaAddr = mallocSub(con0, 1);
+	uint32_t 
+
 	dataAddr = mallocSub(con0, blinkLED_bin_len + 4); // +4 to satisfy arm's boundary requirement
 	if (dataAddr == NULL) {
 		printf("Memory allocation failed\n");
@@ -73,6 +77,21 @@ int main(void) {
 		byteAddr = dataAddr + i;
 		byteData = blinkLED_bin[i];
 		writeSub(con0, byteData, byteAddr);
+		sleep_us(10);
+	}
+
+	// Verify that load was correct
+	for (int i = 0; i < blinkLED_bin_len; i++) {
+		byteAddr = dataAddr + i;
+		byteData = readSub(con0, byteAddr);
+		if (byteData != blinkLED_bin[i]) {
+			printf("Load not correct, exiting.\n\n");
+			gpio_put(LED_PIN, 1);
+    		sleep_ms(250);
+    		gpio_put(LED_PIN, 0);
+			return 1;
+		}
+		
 		sleep_us(10);
 	}
 

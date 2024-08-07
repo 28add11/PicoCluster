@@ -13,21 +13,7 @@
 
 #include "interface.h"
 
-
-void __no_inline_not_in_flash_func(blinkLED)(void){
-	const uint LED_PIN = PICO_DEFAULT_LED_PIN;
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-
-	while (1) {
-		gpio_put(LED_PIN, 1);
-    	sleep_ms(250);
-    	gpio_put(LED_PIN, 0);
-		sleep_ms(250);
-	}
-
-	return;
-}
+#include "blinkLED_bin.h" // Generated header from cmake
 
 
 int main(void) {
@@ -43,7 +29,7 @@ int main(void) {
 
 	printf("started\n");
 
-	interface con0 = {spi0, {4, 5, 6, 7}, 100000};	
+	interface con0 = {spi0, {4, 5, 6, 7}, 500000};	
 
 	initSPI(con0);
 
@@ -71,14 +57,21 @@ int main(void) {
 
 	uint8_t byteData;
 	uint8_t *byteAddr;
-	program blinker = blinkLED;
 
-	dataAddr = mallocSub(con0, sizeof(blinkLED) + 4); // +4 to satisfy arm's boundary requirement
-	dataAddr = (uint8_t *)(((int)dataAddr + 3) & !3); // Arm boundary requirements
+	dataAddr = mallocSub(con0, blinkLED_bin_len + 4); // +4 to satisfy arm's boundary requirement
+	if (dataAddr == NULL) {
+		printf("Memory allocation failed\n");
+		return 1;
+	}
 
-	for (int i = 0; i < sizeof(blinkLED); i++) {
-		byteAddr = (uint8_t *)(dataAddr) + i;
-		byteData = ((uint8_t *)(blinker))[i];
+
+	dataAddr = (uint8_t *)(((uintptr_t)dataAddr + 3) & ~3); // Arm boundary requirements
+
+	printf("Allocated memory at aligned address: %p \t of size: %i\n", (void*)dataAddr, blinkLED_bin_len + 4);
+
+	for (int i = 0; i < blinkLED_bin_len; i++) { // Upload the code
+		byteAddr = dataAddr + i;
+		byteData = blinkLED_bin[i];
 		writeSub(con0, byteData, byteAddr);
 		sleep_us(10);
 	}

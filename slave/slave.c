@@ -26,7 +26,7 @@ int main(void) {
 
 	printf("started\n");
 
-	spi_init(spi0, 100000);
+	spi_init(spi0, 500000);
 
 	spi_set_slave(spi0, true);
 
@@ -63,7 +63,7 @@ int main(void) {
 			gpio_put(LED_PIN, 0);
 			gpio_put(21, 1);
 
-			spi_init(spi0, 100000);
+			spi_init(spi0, 500000);
 			spi_set_format(spi0, 8, 0, 0, SPI_MSB_FIRST);
 			spi_set_slave(spi0, true);
 			break;
@@ -118,10 +118,11 @@ int main(void) {
 		
 		case 4: // Program context switch
 			;
-			printf("Execution time!\n");
 			// Get address of where to start running (program type defined in slave.h)
 			program executable;
 			spi_read_blocking(spi0, 0xFF, (uint8_t *)(&executable), sizeof(program));
+
+			printf("Balling: starting execution\n\n");
 
 			// Transfer execution
 			executable = (program)((uint32_t)executable | 1); // | 1 relates to ARM's thumb execution, which is required for execution to work

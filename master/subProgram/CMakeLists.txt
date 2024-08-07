@@ -3,6 +3,8 @@ add_executable(blinkLED blink.c)
 
 target_link_libraries(blinkLED PRIVATE pico_stdlib)
 
+pico_set_binary_type(blinkLED no_flash)
+
 # Ensure the generated directory exists
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/generated)
 

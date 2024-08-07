@@ -43,8 +43,6 @@ int main(void) {
 
 	uint8_t value[2];
 
-	
-
 	while (1) {
 
 		gpio_put(21, 0);

@@ -60,16 +60,16 @@ int main(void) {
 
 	// Get our distance from where the program needs to be
 	uint8_t *deltaAddr = mallocSub(con0, 1);
-	uint32_t 
-
-	dataAddr = mallocSub(con0, blinkLED_bin_len + 4); // +4 to satisfy arm's boundary requirement
+	size_t deltaAmnt = 0x20004000 - (size_t)(deltaAddr);
+	// Pi pico memory is largely just one big block so we don't have to worry about it not being contiguous
+	dataAddr = mallocSub(con0, blinkLED_bin_len + deltaAmnt); // +4 to satisfy arm's boundary requirement
 	if (dataAddr == NULL) {
 		printf("Memory allocation failed\n");
 		return 1;
 	}
 
 
-	dataAddr = (uint8_t *)(((uintptr_t)dataAddr + 3) & ~3); // Arm boundary requirements
+	dataAddr = (uint8_t *)(0x20004000); // Totally cheating here
 
 	printf("Allocated memory at aligned address: %p \t of size: %i\n", (void*)dataAddr, blinkLED_bin_len + 4);
 

@@ -3,6 +3,8 @@ add_executable(blinkLED blink.c)
 
 target_link_libraries(blinkLED PRIVATE pico_stdlib)
 
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${CMAKE_SOURCE_DIR}/master/subProgram/custom_linker.ld")
+
 pico_set_binary_type(blinkLED no_flash)
 
 # Ensure the generated directory exists
@@ -23,8 +25,6 @@ add_custom_command(
     DEPENDS blinkLED.bin
     COMMENT "Generating binary header from blinkLED"
 )
-
-add_link_options(-Ttext20004000)
 
 # Add custom targets to drive the custom commands
 add_custom_target(generate_raw_binary ALL DEPENDS blinkLED.bin)

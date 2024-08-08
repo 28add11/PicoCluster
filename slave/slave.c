@@ -125,7 +125,7 @@ int main(void) {
 
 			// Transfer execution
 			executable = executable | 1; // | 1 relates to ARM's thumb execution, which is required for execution to work
-			watchdog_reboot(executable, 0, 0x7FFFFF);
+			watchdog_reboot(executable, 0x20042000, 0x7FFFFF);
 			//executable();
 			break;
 

@@ -3,12 +3,14 @@ add_executable(blinkLED blink.c)
 
 target_link_libraries(blinkLED PRIVATE pico_stdlib)
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${CMAKE_SOURCE_DIR}/master/subProgram/custom_linker.ld")
-
 pico_set_binary_type(blinkLED no_flash)
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${CMAKE_SOURCE_DIR}/master/subProgram/custom_linker.ld")
 
 # Ensure the generated directory exists
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/generated)
+
+pico_add_extra_outputs(blinkLED)
 
 # Custom command to convert the ELF binary into a raw binary file
 add_custom_command(

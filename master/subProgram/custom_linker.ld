@@ -1,6 +1,6 @@
 SECTIONS
 {
-.text : ALIGN(0x04) { *.o(.text .rodata .data) }
+.text 0x20004000: ALIGN(0x04) { *.o(.text .rodata .data) }
 .bss :
   {
   __bss_start__ = .;
